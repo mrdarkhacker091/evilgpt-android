@@ -1,0 +1,4 @@
+<resources>
+    <color name="statusBarColor">#000000</color>
+    <color name="navigationBarColor">#000000</color>
+</resources>
