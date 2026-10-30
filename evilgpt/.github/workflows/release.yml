@@ -31,23 +31,20 @@ jobs:
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
 
-      # Use a more reliable Android SDK setup that does not request the obsolete "tools" package
-      - name: Set up Android SDK
+      # Completely avoid the broken "tools" package
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: ''   # Do not install any packages by default (avoids the broken "tools" package)
+          packages: platform-tools
 
-      - name: Install required Android SDK packages
+      - name: Install required SDK components
         run: |
-          # Accept licenses non-interactively and install only what we need
-          yes | sdkmanager --licenses > /dev/null || true
           sdkmanager --install \
-            "platform-tools" \
-            "platforms;android-${ANDROID_COMPILE_SDK}" \
-            "build-tools;${ANDROID_BUILD_TOOLS}"
+            "platforms;android-${{ env.ANDROID_COMPILE_SDK }}" \
+            "build-tools;${{ env.ANDROID_BUILD_TOOLS }}"
 
       - name: Generate Gradle wrapper
-        run: gradle wrapper --gradle-version "${GRADLE_VERSION}" --distribution-type bin
+        run: gradle wrapper --gradle-version "${{ env.GRADLE_VERSION }}" --distribution-type bin
 
       - name: Prepare release signing (optional)
         env:
@@ -60,7 +57,7 @@ jobs:
             echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
             echo "Release keystore prepared."
           else
-            echo "Signing secrets are incomplete; building an unsigned release APK."
+            echo "Signing secrets incomplete → building unsigned APK"
           fi
 
       - name: Build release APK
@@ -71,7 +68,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew --no-daemon assembleRelease --stacktrace
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: evilgpt-release-apk
