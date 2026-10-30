@@ -2,26 +2,31 @@ plugins {
     id 'com.android.application'
 }
 
+def releaseStorePath = System.getenv('KEYSTORE_PATH')
+def releaseStorePassword = System.getenv('KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('KEY_ALIAS')
+def releaseKeyPassword = System.getenv('KEY_PASSWORD')
+def canSignRelease = [releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { it != null && !it.trim().isEmpty() }
+
 android {
     namespace 'com.evilgpt.app'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.evilgpt.app"
+        applicationId 'com.evilgpt.app'
         minSdk 23
         targetSdk 34
         versionCode 1
-        versionName "1.0.0"
+        versionName '1.0.0'
     }
 
-    signingConfigs {
-        release {
-            def ksPath = System.getenv("KEYSTORE_PATH")
-            if (ksPath != null) {
-                storeFile file(ksPath)
-                storePassword System.getenv("KEYSTORE_PASSWORD")
-                keyAlias System.getenv("KEY_ALIAS")
-                keyPassword System.getenv("KEY_PASSWORD")
+    if (canSignRelease) {
+        signingConfigs {
+            release {
+                storeFile file(releaseStorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
             }
         }
     }
@@ -29,7 +34,9 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.release
+            if (canSignRelease) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
